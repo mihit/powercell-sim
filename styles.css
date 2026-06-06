@@ -1,0 +1,916 @@
+:root {
+  --bg: #f7f8fb;
+  --ink: #172033;
+  --muted: #667085;
+  --line: #d9e0ea;
+  --panel: #ffffff;
+  --blue: #2f6fed;
+  --green: #10a66a;
+  --orange: #f97316;
+  --yellow: #facc15;
+  --red: #d92d20;
+  --wire: #2d3748;
+  --shadow: 0 18px 50px rgba(23, 32, 51, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(47, 111, 237, 0.14), transparent 28rem),
+    linear-gradient(135deg, #f7f8fb 0%, #eef5f1 100%);
+}
+
+button,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.workspace {
+  width: min(1540px, 100%);
+  min-height: calc(100vh - 48px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.topbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--blue);
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.1;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 3vw, 2.7rem);
+}
+
+h2 {
+  font-size: 1.1rem;
+}
+
+h3 {
+  font-size: 1rem;
+}
+
+.baseline {
+  max-width: 360px;
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 28px rgba(23, 32, 51, 0.08);
+}
+
+.baseline strong {
+  color: var(--blue);
+}
+
+.baseline span {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(760px, 1fr) 300px;
+  grid-template-areas:
+    "circuit parts"
+    "circuit results";
+  align-items: start;
+  gap: 16px;
+}
+
+.parts-panel,
+.results-panel,
+.circuit-panel {
+  min-width: 0;
+}
+
+.parts-panel,
+.results-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.parts-panel {
+  grid-area: parts;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.template-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.part {
+  width: 100%;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: left;
+  color: var(--ink);
+  background: white;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.part:active {
+  cursor: grabbing;
+}
+
+.part:disabled,
+.part:disabled:active {
+  cursor: not-allowed;
+  background: #f3f5f8;
+}
+
+.part strong,
+.part small {
+  display: block;
+}
+
+.part small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.battery-icon {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 3px solid #2a3242;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--green) 0 62%, #e8eef6 62%);
+}
+
+.battery-icon::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: -8px;
+  width: 6px;
+  height: 12px;
+  border-radius: 0 3px 3px 0;
+  background: #2a3242;
+}
+
+.bulb-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 3px solid #2a3242;
+  border-radius: 50%;
+  background: #fff7c2;
+  box-shadow: 0 0 calc(3px + var(--current-glow, 0.3) * 14px) rgba(250, 204, 21, 0.22);
+}
+
+.bulb-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 13px;
+  border: 3px solid #2a3242;
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  background: #b9c2cf;
+}
+
+.bulb-icon.lit {
+  --current-glow: 0.9;
+}
+
+.ammeter-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 3px solid #2a3242;
+  border-radius: 50%;
+  color: var(--blue);
+  background: white;
+  font-weight: 900;
+}
+
+.wire-icon {
+  position: relative;
+  width: 54px;
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.wire-icon::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 15px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--wire);
+}
+
+.parallel-icon {
+  position: relative;
+  width: 54px;
+  height: 42px;
+  flex: 0 0 auto;
+}
+
+.parallel-icon::before,
+.parallel-icon::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  height: 9px;
+  border: 3px solid var(--wire);
+  border-left-width: 6px;
+  border-right-width: 6px;
+  border-radius: 99px;
+}
+
+.parallel-icon::before {
+  top: 7px;
+}
+
+.parallel-icon::after {
+  bottom: 7px;
+}
+
+.parallel-icon.direct::before {
+  top: 3px;
+}
+
+.parallel-icon.direct::after {
+  bottom: 3px;
+}
+
+.mini-controls {
+  margin-top: auto;
+  display: grid;
+  gap: 12px;
+}
+
+.preset-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.preset-group span {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.preset-button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  border: 1px solid rgba(47, 111, 237, 0.26);
+  border-radius: 6px;
+  padding: 7px 8px;
+  color: var(--blue);
+  background: rgba(47, 111, 237, 0.07);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.18;
+  white-space: normal;
+}
+
+.preset-button.compact {
+  min-height: 42px;
+}
+
+.preset-button:hover,
+.small-action:hover,
+.ghost-button:hover {
+  background: rgba(47, 111, 237, 0.14);
+}
+
+.preset-button:disabled:hover,
+.small-action:disabled:hover,
+.ghost-button:disabled:hover {
+  background: rgba(47, 111, 237, 0.08);
+}
+
+.mini-controls label {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: white;
+  color: var(--ink);
+}
+
+.ghost-button,
+.small-action {
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.ghost-button {
+  padding: 11px 14px;
+  color: var(--blue);
+  border: 1px solid rgba(47, 111, 237, 0.3);
+  background: rgba(47, 111, 237, 0.08);
+}
+
+.small-action {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 6px 10px;
+  color: var(--blue);
+  border: 1px solid rgba(47, 111, 237, 0.28);
+  background: rgba(47, 111, 237, 0.08);
+  white-space: nowrap;
+}
+
+.small-action.danger {
+  color: var(--red);
+  border-color: rgba(217, 45, 32, 0.28);
+  background: rgba(217, 45, 32, 0.07);
+}
+
+.free-tool.selected {
+  color: white;
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.free-tool.selected.danger {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.circuit-panel {
+  grid-area: circuit;
+  display: flex;
+}
+
+.drop-zone {
+  flex: 1;
+  min-height: 650px;
+  overflow: auto;
+  border: 2px dashed #bcc8d8;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(23, 32, 51, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(23, 32, 51, 0.06) 1px, transparent 1px),
+    rgba(255, 255, 255, 0.74);
+  background-size: 32px 32px;
+  box-shadow: var(--shadow);
+}
+
+.drop-zone.drag-over {
+  border-color: var(--blue);
+  background-color: rgba(47, 111, 237, 0.08);
+}
+
+.circuit-board {
+  min-width: 780px;
+  min-height: 100%;
+  padding: 18px;
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.schematic-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  overflow-x: visible;
+  padding-bottom: 4px;
+}
+
+.toolbar-label {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--line);
+}
+
+.schematic {
+  width: max(100%, var(--schematic-width, 100%));
+  min-height: 560px;
+  border: 1px solid rgba(23, 32, 51, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 34px rgba(23, 32, 51, 0.1);
+  touch-action: none;
+}
+
+.wire {
+  stroke: var(--wire);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.filament {
+  stroke: #2a3242;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.value-badge rect {
+  fill: rgba(255, 255, 255, 0.94);
+  stroke: rgba(23, 32, 51, 0.12);
+  stroke-width: 1;
+}
+
+.current-badge rect {
+  fill: #ffffff;
+  stroke: rgba(47, 111, 237, 0.3);
+  stroke-width: 1.5;
+}
+
+.bulb-glass {
+  fill: #fff7c2;
+  stroke: #2a3242;
+  stroke-width: 4;
+  filter: none;
+}
+
+.battery-long,
+.battery-short {
+  stroke: #2a3242;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.battery-long {
+  stroke: var(--green);
+}
+
+.battery-bank-box {
+  fill: rgba(255, 255, 255, 0.96);
+  stroke: #2a3242;
+  stroke-width: 4;
+}
+
+.battery-pack-long,
+.battery-pack-short {
+  stroke: #2a3242;
+  stroke-linecap: round;
+}
+
+.battery-pack-long {
+  stroke: var(--green);
+  stroke-width: 6;
+}
+
+.battery-pack-short {
+  stroke-width: 5;
+}
+
+.ammeter-face {
+  fill: white;
+  stroke: #2a3242;
+  stroke-width: 4;
+}
+
+.wire-leaf {
+  stroke: var(--wire);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.short-warning {
+  fill: rgba(217, 45, 32, 0.08);
+  stroke: rgba(217, 45, 32, 0.3);
+  stroke-width: 2;
+}
+
+.svg-label {
+  fill: var(--ink);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.svg-small {
+  fill: #475467;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.svg-note {
+  fill: var(--blue);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.svg-warning {
+  fill: var(--red);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.terminal-label {
+  fill: var(--green);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.free-layer .wire {
+  stroke-width: 7;
+}
+
+.free-node {
+  cursor: pointer;
+  outline: none;
+}
+
+.free-node circle {
+  fill: white;
+  stroke: var(--blue);
+  stroke-width: 3;
+}
+
+.free-node:hover circle,
+.free-node:focus circle,
+.free-node.selected circle {
+  fill: rgba(47, 111, 237, 0.16);
+  stroke-width: 5;
+}
+
+.free-component {
+  cursor: pointer;
+}
+
+.free-wire-edge:hover .wire,
+.free-wire-edge:focus .wire {
+  stroke: var(--blue);
+}
+
+.svg-button {
+  outline: none;
+}
+
+.svg-button rect {
+  fill: rgba(47, 111, 237, 0.1);
+  stroke: rgba(47, 111, 237, 0.35);
+  stroke-width: 1.5;
+}
+
+.svg-button.danger rect {
+  fill: rgba(217, 45, 32, 0.09);
+  stroke: rgba(217, 45, 32, 0.35);
+}
+
+.svg-button:hover rect,
+.svg-button:focus rect {
+  fill: rgba(47, 111, 237, 0.2);
+}
+
+.svg-button.danger:hover rect,
+.svg-button.danger:focus rect {
+  fill: rgba(217, 45, 32, 0.18);
+}
+
+.svg-button-text {
+  pointer-events: none;
+  fill: var(--blue);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.svg-button.danger .svg-button-text {
+  fill: var(--red);
+}
+
+.drag-item {
+  cursor: grab;
+  outline: none;
+  touch-action: none;
+}
+
+.drag-item:active {
+  cursor: grabbing;
+}
+
+.drag-ghost {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.drag-ghost.delete {
+  opacity: 0.55;
+}
+
+.drag-ghost.delete .bulb-glass,
+.drag-ghost.delete .battery-bank-box {
+  stroke: var(--red);
+}
+
+.drop-sensor {
+  fill: transparent;
+  pointer-events: none;
+}
+
+.drop-sensor.active {
+  fill: rgba(47, 111, 237, 0.16);
+  stroke: rgba(47, 111, 237, 0.45);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+}
+
+.drop-preview {
+  pointer-events: none;
+}
+
+.drop-preview-box {
+  fill: rgba(47, 111, 237, 0.12);
+  stroke: var(--blue);
+  stroke-width: 3;
+  stroke-dasharray: 10 7;
+}
+
+.drop-preview.parallel .drop-preview-box {
+  fill: rgba(16, 166, 106, 0.12);
+  stroke: var(--green);
+}
+
+.drop-preview-line {
+  stroke: var(--blue);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 10 7;
+}
+
+.drop-preview.parallel .drop-preview-line {
+  stroke: var(--green);
+}
+
+.drop-preview-label-bg {
+  fill: white;
+  stroke: rgba(47, 111, 237, 0.3);
+  stroke-width: 1.5;
+}
+
+.drop-preview.parallel .drop-preview-label-bg {
+  stroke: rgba(16, 166, 106, 0.35);
+}
+
+.drop-preview-label {
+  fill: var(--blue);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.drop-preview.parallel .drop-preview-label {
+  fill: var(--green);
+}
+
+.delete-zone.active {
+  fill: rgba(217, 45, 32, 0.08);
+  stroke: rgba(217, 45, 32, 0.32);
+  stroke-width: 2;
+  stroke-dasharray: 9 7;
+}
+
+.results-panel {
+  grid-area: results;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meters {
+  display: grid;
+  gap: 12px;
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.meter span {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
+.meter strong {
+  font-size: 1.4rem;
+}
+
+.meter small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.bar {
+  grid-column: 1 / -1;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e6ebf2;
+}
+
+.bar i {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+  transition: width 180ms ease;
+}
+
+.bar.life i {
+  background: var(--green);
+}
+
+.readout,
+.explain {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfcff;
+}
+
+.detail-list {
+  max-height: 240px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-right: 4px;
+}
+
+.compact-list {
+  max-height: none;
+}
+
+.detail-row {
+  display: grid;
+  gap: 4px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.detail-row:last-child {
+  border-bottom: 0;
+}
+
+.detail-row span {
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.detail-row strong {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.explain {
+  color: #344054;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.explain strong {
+  color: var(--ink);
+}
+
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: minmax(560px, 1fr) 260px;
+    grid-template-areas:
+      "circuit parts"
+      "circuit results";
+  }
+}
+
+@media (max-width: 760px) {
+  .app {
+    padding: 14px;
+  }
+
+  .topbar,
+  .layout {
+    display: grid;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "circuit"
+      "parts"
+      "results";
+  }
+
+  .circuit-panel {
+    order: 1;
+  }
+
+  .parts-panel {
+    order: 2;
+  }
+
+  .results-panel {
+    order: 3;
+  }
+
+  .drop-zone {
+    min-height: 520px;
+  }
+
+  .circuit-board {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .schematic {
+    min-height: 430px;
+  }
+}
