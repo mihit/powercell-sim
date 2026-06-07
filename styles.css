@@ -489,6 +489,10 @@ select {
   stroke-linejoin: round;
 }
 
+.junction-dot {
+  fill: var(--wire);
+}
+
 .filament {
   stroke: #2a3242;
   stroke-width: 3;

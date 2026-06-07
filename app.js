@@ -18,6 +18,9 @@ const BOARD_PAD = 70;
 const WIRE_WIDTH = 8;
 const BEND_CLEARANCE = 46;
 const OUTER_RETURN_CLEARANCE = 44;
+const EXAM_RAIL_SIDE = 66;
+const EXAM_RAIL_GAP = 34;
+const JUNCTION_R = 5;
 const NEAR_ZERO_RESISTANCE = 0.000001;
 const BASE_RESISTANCE = {
   bulb: 1,
@@ -379,6 +382,15 @@ function makeEl(name, attrs = {}, text = "") {
 }
 
 function measure(node) {
+  const examPlan = getExamRailPlan(node);
+  if (examPlan) {
+    const branchSizes = examPlan.branches.map((branch) => measure(branch));
+    return {
+      w: Math.max(...branchSizes.map((size) => size.w)) + EXAM_RAIL_SIDE * 2,
+      h: branchSizes.reduce((sum, size) => sum + size.h, 0) + EXAM_RAIL_GAP * (branchSizes.length - 1),
+    };
+  }
+
   if (node.type === "leaf") return { w: LEAF_W, h: LEAF_H };
   const sizes = node.children.map(measure);
   if (node.type === "series") {
@@ -391,6 +403,59 @@ function measure(node) {
   return {
     w: Math.max(...sizes.map((size) => size.w)) + PARALLEL_SIDE * 2,
     h: sizes.reduce((sum, size) => sum + size.h, 0) + PARALLEL_GAP * (sizes.length - 1),
+  };
+}
+
+function getExamRailPlan(node) {
+  if (!node || node.type !== "series") return null;
+  const runs = [];
+  node.children.forEach((child) => {
+    const kind = getExamBlockKind(child);
+    if (!kind) return;
+    const last = runs.at(-1);
+    if (last?.kind === kind) {
+      last.nodes.push(child);
+    } else {
+      runs.push({ kind, nodes: [child] });
+    }
+  });
+  if (runs.reduce((sum, run) => sum + run.nodes.length, 0) !== node.children.length) return null;
+  if (runs.length !== 2 || !runs.some((run) => run.kind === "source") || !runs.some((run) => run.kind === "load")) return null;
+  if (!runs.every(isExamRunSupported)) return null;
+
+  const loadRun = runs.find((run) => run.kind === "load");
+  const sourceRun = runs.find((run) => run.kind === "source");
+  return {
+    loadRun,
+    sourceRun,
+    branches: [...expandExamRun(loadRun), ...expandExamRun(sourceRun)],
+  };
+}
+
+function isExamRunSupported(run) {
+  return run.nodes.length === 1 || run.nodes.every((node) => node.type !== "parallel");
+}
+
+function getExamBlockKind(node) {
+  const leaves = flattenLeaves(node);
+  if (!leaves.length) return null;
+  if (leaves.every((leafNode) => leafNode.kind === "battery")) return "source";
+  if (leaves.every((leafNode) => leafNode.kind !== "battery")) return "load";
+  return null;
+}
+
+function expandExamRun(run) {
+  const block = makeExamRunBlock(run);
+  return block.type === "parallel" ? block.children : [block];
+}
+
+function makeExamRunBlock(run) {
+  if (run.nodes.length === 1) return run.nodes[0];
+  return {
+    type: "series",
+    id: `${run.kind}-exam-${run.nodes.map((node) => node.id).join("-")}`,
+    children: run.nodes,
+    virtual: true,
   };
 }
 
@@ -416,6 +481,9 @@ function buildSeriesRows(sizes) {
 }
 
 function layoutNode(node, x, y, options = {}) {
+  const examPlan = getExamRailPlan(node);
+  if (examPlan) return layoutExamRail(node, examPlan, x, y, options);
+
   const size = measure(node);
   if (node.type === "leaf") {
     const entryX = options.reverse ? x + size.w - 6 : x + 6;
@@ -482,6 +550,56 @@ function layoutNode(node, x, y, options = {}) {
   };
 }
 
+function layoutExamRail(node, plan, x, y, options = {}) {
+  const branchSizes = plan.branches.map(measure);
+  const size = measure(node);
+  const reverse = Boolean(options.reverse);
+  const leftX = reverse ? x + size.w - 8 : x + 8;
+  const rightX = reverse ? x + 8 : x + size.w - 8;
+  let cy = y;
+  const children = plan.branches.map((branch, index) => {
+    const branchSize = branchSizes[index];
+    const bx = x + EXAM_RAIL_SIDE + (size.w - EXAM_RAIL_SIDE * 2 - branchSize.w) / 2;
+    const childLayout = layoutNode(branch, bx, cy, { reverse });
+    cy += branchSize.h + EXAM_RAIL_GAP;
+    return childLayout;
+  });
+  const loadCount = expandExamRun(plan.loadRun).length;
+  const examGroupItems = [
+    makeExamGroupItem(plan.loadRun, children.slice(0, loadCount)),
+    makeExamGroupItem(plan.sourceRun, children.slice(loadCount)),
+  ].filter(Boolean);
+  return {
+    ...size,
+    x,
+    y,
+    node,
+    entry: { x: leftX, y: children[0].entry.y },
+    exit: { x: rightX, y: children.at(-1).entry.y },
+    children,
+    reverse,
+    examRail: true,
+    examGroupItems,
+  };
+}
+
+function makeExamGroupItem(run, layouts) {
+  if (run.nodes.length !== 1 || run.nodes[0].type === "leaf") return null;
+  const minX = Math.min(...layouts.map((layout) => layout.x));
+  const minY = Math.min(...layouts.map((layout) => layout.y));
+  const maxX = Math.max(...layouts.map((layout) => layout.x + layout.w));
+  const maxY = Math.max(...layouts.map((layout) => layout.y + layout.h));
+  return {
+    node: run.nodes[0],
+    bbox: {
+      x: minX - 16,
+      y: minY - 16,
+      w: maxX - minX + 32,
+      h: maxY - minY + 32,
+    },
+  };
+}
+
 function getSeriesRowY(rows, y, totalHeight) {
   if (rows.length <= 2) {
     let cy = y;
@@ -506,6 +624,10 @@ function getSeriesRowY(rows, y, totalHeight) {
 function drawWire(points, className = "wire") {
   const d = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
   svg.append(makeEl("path", { class: className, d, fill: "none" }));
+}
+
+function drawJunctionDot(x, y) {
+  svg.append(makeEl("circle", { class: "junction-dot", cx: x, cy: y, r: JUNCTION_R }));
 }
 
 function drawSeriesWire(fromLayout, toLayout) {
@@ -608,7 +730,39 @@ function drawLayout(layout, currents) {
     return;
   }
 
-  if (layout.node.type === "series") {
+  if (layout.examRail) {
+    const leftX = layout.entry.x;
+    const rightX = layout.exit.x;
+    const firstY = layout.children[0].entry.y;
+    const lastY = layout.children.at(-1).entry.y;
+    drawWire([{ x: leftX, y: firstY }, { x: leftX, y: lastY }]);
+    drawWire([{ x: rightX, y: firstY }, { x: rightX, y: lastY }]);
+    layout.children.forEach((child) => {
+      drawWire([{ x: leftX, y: child.entry.y }, child.entry]);
+      drawWire([child.exit, { x: rightX, y: child.exit.y }]);
+      drawLayout(child, currents);
+      drawJunctionDot(leftX, child.entry.y);
+      drawJunctionDot(rightX, child.exit.y);
+    });
+    layout.examGroupItems?.forEach((item) => {
+      svg.append(makeEl("rect", {
+        class: "drop-sensor",
+        x: item.bbox.x,
+        y: item.bbox.y,
+        width: item.bbox.w,
+        height: item.bbox.h,
+        rx: 12,
+        "data-id": item.node.id,
+      }));
+      state.renderItems.push({
+        id: item.node.id,
+        node: item.node,
+        bbox: item.bbox,
+        entry: layout.entry,
+        exit: layout.exit,
+      });
+    });
+  } else if (layout.node.type === "series") {
     layout.children.forEach((child, index) => {
       drawLayout(child, currents);
       if (index < layout.children.length - 1) drawSeriesWire(child, layout.children[index + 1]);
@@ -627,22 +781,24 @@ function drawLayout(layout, currents) {
     });
   }
 
-  svg.append(makeEl("rect", {
-    class: "drop-sensor",
-    x: layout.x,
-    y: layout.y,
-    width: layout.w,
-    height: layout.h,
-    rx: 12,
-    "data-id": layout.node.id,
-  }));
-  state.renderItems.push({
-    id: layout.node.id,
-    node: layout.node,
-    bbox: { x: layout.x, y: layout.y, w: layout.w, h: layout.h },
-    entry: layout.entry,
-    exit: layout.exit,
-  });
+  if (!layout.node.virtual) {
+    svg.append(makeEl("rect", {
+      class: "drop-sensor",
+      x: layout.x,
+      y: layout.y,
+      width: layout.w,
+      height: layout.h,
+      rx: 12,
+      "data-id": layout.node.id,
+    }));
+    state.renderItems.push({
+      id: layout.node.id,
+      node: layout.node,
+      bbox: { x: layout.x, y: layout.y, w: layout.w, h: layout.h },
+      entry: layout.entry,
+      exit: layout.exit,
+    });
+  }
 }
 
 function render() {
@@ -664,7 +820,7 @@ function render() {
   svg.style.setProperty("--schematic-width", `${width}px`);
 
   const layout = layoutNode(state.tree, BOARD_PAD, BOARD_PAD);
-  drawOuterReturnWire(layout, width, size);
+  if (!layout.examRail) drawOuterReturnWire(layout, width, size);
   drawLayout(layout, calc.map);
   drawTrashGuide(width, height);
   updateReadout(calc);
