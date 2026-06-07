@@ -43,8 +43,7 @@ const KIND_LABEL = {
   wire: "導線",
 };
 const SYMBOL_Y_OFFSET = 46;
-const BADGE_Y_OFFSET = 94;
-const LABEL_Y_OFFSET = 116;
+const BADGE_Y_OFFSET = 106;
 
 const state = {
   tree: null,
@@ -706,19 +705,15 @@ function drawLeaf(layout, currents) {
   if (node.kind === "bulb") {
     g.append(makeEl("circle", { class: "bulb-glass", cx, cy: symbolY, r: 25 }));
     g.append(makeEl("path", { class: "filament", d: `M ${cx - 15} ${symbolY} L ${cx - 5} ${symbolY - 10} L ${cx + 5} ${symbolY + 10} L ${cx + 15} ${symbolY}`, fill: "none" }));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("bulb-", "豆")));
   } else if (node.kind === "battery") {
     g.append(makeEl("line", { class: "battery-long", x1: cx - 16, y1: symbolY - 30, x2: cx - 16, y2: symbolY + 30 }));
     g.append(makeEl("line", { class: "battery-short", x1: cx + 14, y1: symbolY - 21, x2: cx + 14, y2: symbolY + 21 }));
     g.append(makeEl("text", { class: "terminal-label", x: cx - 42, y: symbolY - 24, "text-anchor": "middle" }, "+"));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("battery-", "電")));
   } else if (node.kind === "ammeter") {
     g.append(makeEl("circle", { class: "ammeter-face", cx, cy: symbolY, r: 27 }));
     g.append(makeEl("text", { class: "svg-label", x: cx, y: symbolY + 6, "text-anchor": "middle" }, "A"));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("ammeter-", "計")));
   } else {
     g.append(makeEl("line", { class: "wire-leaf", x1: x + 28, y1: cy, x2: x + w - 28, y2: cy }));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("wire-", "線")));
   }
 
   svg.append(g);
