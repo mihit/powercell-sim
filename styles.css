@@ -671,6 +671,11 @@ select {
   touch-action: none;
 }
 
+.drag-hitbox {
+  fill: rgba(255, 255, 255, 0.001);
+  stroke: none;
+}
+
 .drag-item:active {
   cursor: grabbing;
 }

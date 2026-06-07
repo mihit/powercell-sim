@@ -8,7 +8,7 @@ const resetButton = document.querySelector("#resetButton");
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const LEAF_W = 132;
-const LEAF_H = 96;
+const LEAF_H = 122;
 const SERIES_GAP = 30;
 const SERIES_WRAP_WIDTH = 720;
 const SERIES_ROW_GAP = 82;
@@ -42,6 +42,9 @@ const KIND_LABEL = {
   ammeter: "電流計",
   wire: "導線",
 };
+const SYMBOL_Y_OFFSET = 46;
+const BADGE_Y_OFFSET = 94;
+const LABEL_Y_OFFSET = 116;
 
 const state = {
   tree: null,
@@ -679,7 +682,16 @@ function drawLeaf(layout, currents) {
   const { node, x, y, w, h } = layout;
   const cx = x + w / 2;
   const cy = y + h / 2;
+  const symbolY = y + SYMBOL_Y_OFFSET;
   const g = makeEl("g", { class: "drag-item", "data-id": node.id, tabindex: "0" });
+  g.append(makeEl("rect", {
+    class: "drag-hitbox",
+    x: x + 10,
+    y: y + 6,
+    width: w - 20,
+    height: h - 12,
+    rx: 12,
+  }));
   const sensor = makeEl("rect", {
     class: "drop-sensor",
     x: x + 2,
@@ -692,25 +704,25 @@ function drawLeaf(layout, currents) {
   svg.append(sensor);
 
   if (node.kind === "bulb") {
-    g.append(makeEl("circle", { class: "bulb-glass", cx, cy: cy - 6, r: 25 }));
-    g.append(makeEl("path", { class: "filament", d: `M ${cx - 15} ${cy - 6} L ${cx - 5} ${cy - 16} L ${cx + 5} ${cy + 4} L ${cx + 15} ${cy - 6}`, fill: "none" }));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: cy + 42, "text-anchor": "middle" }, node.id.replace("bulb-", "豆")));
+    g.append(makeEl("circle", { class: "bulb-glass", cx, cy: symbolY, r: 25 }));
+    g.append(makeEl("path", { class: "filament", d: `M ${cx - 15} ${symbolY} L ${cx - 5} ${symbolY - 10} L ${cx + 5} ${symbolY + 10} L ${cx + 15} ${symbolY}`, fill: "none" }));
+    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("bulb-", "豆")));
   } else if (node.kind === "battery") {
-    g.append(makeEl("line", { class: "battery-long", x1: cx - 16, y1: cy - 30, x2: cx - 16, y2: cy + 30 }));
-    g.append(makeEl("line", { class: "battery-short", x1: cx + 14, y1: cy - 21, x2: cx + 14, y2: cy + 21 }));
-    g.append(makeEl("text", { class: "terminal-label", x: cx - 42, y: cy - 24, "text-anchor": "middle" }, "+"));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: cy + 43, "text-anchor": "middle" }, node.id.replace("battery-", "電")));
+    g.append(makeEl("line", { class: "battery-long", x1: cx - 16, y1: symbolY - 30, x2: cx - 16, y2: symbolY + 30 }));
+    g.append(makeEl("line", { class: "battery-short", x1: cx + 14, y1: symbolY - 21, x2: cx + 14, y2: symbolY + 21 }));
+    g.append(makeEl("text", { class: "terminal-label", x: cx - 42, y: symbolY - 24, "text-anchor": "middle" }, "+"));
+    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("battery-", "電")));
   } else if (node.kind === "ammeter") {
-    g.append(makeEl("circle", { class: "ammeter-face", cx, cy: cy - 5, r: 27 }));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: cy + 1, "text-anchor": "middle" }, "A"));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: cy + 43, "text-anchor": "middle" }, node.id.replace("ammeter-", "計")));
+    g.append(makeEl("circle", { class: "ammeter-face", cx, cy: symbolY, r: 27 }));
+    g.append(makeEl("text", { class: "svg-label", x: cx, y: symbolY + 6, "text-anchor": "middle" }, "A"));
+    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("ammeter-", "計")));
   } else {
     g.append(makeEl("line", { class: "wire-leaf", x1: x + 28, y1: cy, x2: x + w - 28, y2: cy }));
-    g.append(makeEl("text", { class: "svg-label", x: cx, y: cy + 36, "text-anchor": "middle" }, node.id.replace("wire-", "線")));
+    g.append(makeEl("text", { class: "svg-label", x: cx, y: y + LABEL_Y_OFFSET, "text-anchor": "middle" }, node.id.replace("wire-", "線")));
   }
 
   svg.append(g);
-  drawBadge(cx, y + 16, `I=${displayCurrent(state.metrics, node.id)}`);
+  drawBadge(cx, y + BADGE_Y_OFFSET, `I=${displayCurrent(state.metrics, node.id)}`);
   state.renderItems.push({
     id: node.id,
     node,
